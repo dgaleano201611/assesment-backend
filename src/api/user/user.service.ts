@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, User } from "@prisma/client";
 
 interface Input {
   name: string;
@@ -74,6 +74,14 @@ export const deleteUser = (id: string) => {
   return prisma.user.delete({
     where: {
       id: id,
+    },
+  });
+};
+
+export const login = (email: string) => {
+  return prisma.user.findUnique({
+    where: {
+      email: email,
     },
   });
 };

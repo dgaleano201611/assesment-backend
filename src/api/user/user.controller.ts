@@ -1,11 +1,14 @@
 import { Request, Response, NextFunction } from "express";
+import bcrypt from "bcrypt";
 import {
   createUser,
   deleteUser,
   getAllUserById,
   getAllUsers,
+  login,
   updateUserById,
 } from "./user.service";
+import jwt from "jsonwebtoken";
 
 export const findAllUsersController = async (
   req: Request,
@@ -43,8 +46,49 @@ export const createUserController = async (
   next: NextFunction
 ) => {
   try {
-    const user = await createUser(req.body);
-    res.status(201).json({ message: "created user", data: user });
+    const { name, email } = req.body;
+    const encPassword = await bcrypt.hash(req.body.password, 10);
+    const user = await createUser({ ...req.body, password: encPassword });
+
+    //config jwt
+    const token = jwt.sign({ id: user.id }, "juanDiego", {
+      expiresIn: 60 * 60 * 1,
+    });
+
+    res
+      .status(201)
+      .json({ message: "created user", data: { name, email }, token });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const loginController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email, password } = req.body;
+    const user = await login(email);
+
+    if (!user) {
+      throw new Error("email or password invalid");
+    }
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      throw new Error("email or password invalid");
+    }
+
+    const { id, name } = user;
+
+    const token = jwt.sign({ id: id }, "juanDiego", {
+      expiresIn: 60 * 60 * 1,
+    });
+    res
+      .status(200)
+      .json({ message: "user LOGIN", data: { name, email }, token });
   } catch (error) {
     next(error);
   }
