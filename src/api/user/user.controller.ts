@@ -1,15 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import bcrypt from "bcrypt";
 import {
-  createUser,
   deleteUser,
-  getAllUserById,
   getAllUsers,
-  login,
+  getUserById,
   updateUserById,
 } from "./user.service";
-import jwt from "jsonwebtoken";
-
+import { AuthUser } from "../../auth/auth.types";
 export const findAllUsersController = async (
   req: Request,
   res: Response,
@@ -30,7 +26,7 @@ export const findUserByIdController = async (
 ) => {
   try {
     const { id } = req.params;
-    const user = await getAllUserById(id);
+    const user = await getUserById(id);
     if (!user) {
       return res.status(404).json({ message: "user not found" });
     }
@@ -40,81 +36,36 @@ export const findUserByIdController = async (
   }
 };
 
-export const createUserController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { name, email } = req.body;
-    const encPassword = await bcrypt.hash(req.body.password, 10);
-    const user = await createUser({ ...req.body, password: encPassword });
-
-    //config jwt
-    const token = jwt.sign({ id: user.id }, "juanDiego", {
-      expiresIn: 60 * 60 * 1,
-    });
-
-    res
-      .status(201)
-      .json({ message: "created user", data: { name, email }, token });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const loginController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const { email, password } = req.body;
-    const user = await login(email);
-
-    if (!user) {
-      throw new Error("email or password invalid");
-    }
-
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-      throw new Error("email or password invalid");
-    }
-
-    const { id, name } = user;
-
-    const token = jwt.sign({ id: id }, "juanDiego", {
-      expiresIn: 60 * 60 * 1,
-    });
-    res
-      .status(200)
-      .json({ message: "user LOGIN", data: { name, email }, token });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const updateUserController = async (
-  req: Request,
+  req: AuthUser,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
-    const user = await updateUserById(id, req.body);
-    res.status(200).json({ message: "updated user", data: user });
-  } catch (error) {
-    next(error);
+    const id = req.user ? req.user : "";
+    const user = await getUserById(id);
+
+    const userUpdated = await updateUserById(id, {
+      ...req.body,
+      password: user?.password,
+    });
+
+    res.status(200).json({ message: "updated user", data: userUpdated });
+  } catch (error: any) {
+    res.status(500).json({ message: "pailas" });
   }
 };
 
 export const deleteUserController = async (
-  req: Request,
+  req: AuthUser & Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { id } = req.params;
+
+    console.log("id es: ", id);
+
     const user = await deleteUser(id);
     res.status(200).json({ message: "deleted user", data: user });
   } catch (error) {

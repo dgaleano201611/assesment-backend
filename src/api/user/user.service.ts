@@ -1,4 +1,4 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 interface Input {
   name: string;
@@ -25,12 +25,13 @@ export const getAllUsers = () => {
   });
 };
 
-export const getAllUserById = (id: string) => {
+export const getUserById = (id: string) => {
   return prisma.user.findUnique({
     where: {
       id: id,
     },
     select: {
+      password: true,
       id: true,
       name: true,
       email: true,
@@ -74,14 +75,6 @@ export const deleteUser = (id: string) => {
   return prisma.user.delete({
     where: {
       id: id,
-    },
-  });
-};
-
-export const login = (email: string) => {
-  return prisma.user.findUnique({
-    where: {
-      email: email,
     },
   });
 };
