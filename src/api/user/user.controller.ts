@@ -1,12 +1,11 @@
 import { Request, Response, NextFunction } from "express";
 import {
-  createUser,
   deleteUser,
-  getAllUserById,
   getAllUsers,
+  getUserById,
   updateUserById,
 } from "./user.service";
-
+import { AuthUser } from "../../auth/auth.types";
 export const findAllUsersController = async (
   req: Request,
   res: Response,
@@ -27,7 +26,7 @@ export const findUserByIdController = async (
 ) => {
   try {
     const { id } = req.params;
-    const user = await getAllUserById(id);
+    const user = await getUserById(id);
     if (!user) {
       return res.status(404).json({ message: "user not found" });
     }
@@ -37,40 +36,36 @@ export const findUserByIdController = async (
   }
 };
 
-export const createUserController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const user = await createUser(req.body);
-    res.status(201).json({ message: "created user", data: user });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const updateUserController = async (
-  req: Request,
+  req: AuthUser,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
-    const user = await updateUserById(id, req.body);
-    res.status(200).json({ message: "updated user", data: user });
-  } catch (error) {
-    next(error);
+    const id = req.user ? req.user : "";
+    const user = await getUserById(id);
+
+    const userUpdated = await updateUserById(id, {
+      ...req.body,
+      password: user?.password,
+    });
+
+    res.status(200).json({ message: "updated user", data: userUpdated });
+  } catch (error: any) {
+    res.status(500).json({ message: "pailas" });
   }
 };
 
 export const deleteUserController = async (
-  req: Request,
+  req: AuthUser & Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { id } = req.params;
+
+    console.log("id es: ", id);
+
     const user = await deleteUser(id);
     res.status(200).json({ message: "deleted user", data: user });
   } catch (error) {
