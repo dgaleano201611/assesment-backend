@@ -14,11 +14,9 @@ export const getAllUsers = () => {
       id: true,
       name: true,
       email: true,
-      favs: {
+      listFavs: {
         select: {
           name: true,
-          title: true,
-          link: true,
         },
       },
     },
@@ -35,11 +33,9 @@ export const getUserById = (id: string) => {
       id: true,
       name: true,
       email: true,
-      favs: {
+      listFavs: {
         select: {
           name: true,
-          title: true,
-          link: true,
         },
       },
     },

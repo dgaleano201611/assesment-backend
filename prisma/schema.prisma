@@ -11,19 +11,27 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(cuid())
+  id       String     @id @default(cuid())
   name     String
-  email    String @unique
+  email    String     @unique
   password String
-  favs     Favs[]
+  listFavs ListFavs[]
 }
 
 model Favs {
-  id          String  @id @default(cuid())
+  id          String    @id @default(cuid())
   name        String
   title       String
   description String
   link        String
-  User        User?   @relation(fields: [userId], references: [id])
-  userId      String?
+  ListFavs    ListFavs? @relation(fields: [listFavsId], references: [id])
+  listFavsId  String?
+}
+
+model ListFavs {
+  id     String  @id @default(cuid())
+  name   String
+  User   User?   @relation(fields: [userId], references: [id])
+  userId String?
+  favs   Favs[]
 }
